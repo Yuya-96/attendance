@@ -8,8 +8,8 @@
 }
 
 .brand-mark img {
-  width: 100%;
-  height: 100%;
+  width: 150%;
+  height: 150%;
   object-fit: contain;
 }
 /* ロゴと文字の高さを中央揃え */
@@ -30,8 +30,8 @@
 
 .brand-mark img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 150%;
+  height: 150%;
   object-fit: contain;
 }
 /* ロゴと文字の高さを中央揃え */
@@ -52,8 +52,8 @@
 
 .brand-mark img {
   display: block;
-  width: 120%;
-  height: 120%;
+  width: 150%;
+  height: 150%;
   object-fit: contain;
 }
 /* ロゴ横の文字を改行させない */
