@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<link href="meiko.png" rel="icon" type="image/x-icon"/>
+<link href="meiko.png" rel="apple-touch-icon"/>
+<meta charset="utf-8"/>
+<title>給与確認</title>
+
+<meta content="width=device-width, initial-scale=1" name="viewport"/><link href="style.css" rel="stylesheet"/></head>
+<body><meta content="width=device-width, initial-scale=1" name="viewport"/><link href="style.css" rel="stylesheet"/></head>
+<body>
+<aside class="sidebar">
+  <div class="brand">
+    <span class="brand-mark">
+      <img src="meiko.ico" alt="ロゴ">
+    </span>
+    出退勤システム
+  </div><div class="nav-label">WORKSPACE</div><a class="nav-link" href="index.html"><span class="nav-icon">⌂</span>ホーム</a><a class="nav-link" href="input.html"><span class="nav-icon">＋</span>打刻入力</a><a class="nav-link" href="list.html"><span class="nav-icon">▦</span>勤怠一覧</a><a class="nav-link active" href="salary.html"><span class="nav-icon">◈</span>給与確認</a><div class="sidebar-foot">ATTENDANCE SYSTEM<br/>Personal workspace</div></aside><div class="app-main"><header class="topbar"><div class="topbar-title">給与確認</div><div class="topbar-date" id="today"></div></header><main class="content"><div class="eyebrow">WORKSPACE</div><h1>給与確認</h1><p class="subtitle">給与の集計と内訳を確認できます。</p><div class="panel">
+
+ 総支給額の表示 
+<h2>総支給額（全期間）</h2>
+<div id="total-salary-display"></div>
+<label>年を選択: 
+    <select id="year-select"></select>
+</label>
+<div id="month-picker"></div>
+<div id="salary-display"></div>
+<h2>特別給理由</h2>
+<div id="special-reasons-list"></div>
+<br>
+<a href="index.html">メニューに戻る</a>
+</br></div></main></div><script>
+    const monthPicker = document.getElementById('month-picker');
+    const display = document.getElementById('salary-display');
+    const specialReasonsList = document.getElementById('special-reasons-list');
+    const yearSelect = document.getElementById('year-select');
+    const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+    function getYearsWithData() {
+      const data = JSON.parse(localStorage.getItem('attendance') || '[]');
+      const years = new Set();
+      data.forEach(entry => {
+        const year = entry.date.split('-')[0];
+        years.add(year);
+      });
+      return Array.from(years).sort();
+    }
+
+    function updateYearSelect() {
+      const years = getYearsWithData();
+      yearSelect.innerHTML = '';
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+      });
+      if (years.includes(new Date().getFullYear().toString())) {
+        yearSelect.value = new Date().getFullYear();
+      }
+      renderMonthPicker();
+    }
+
+    yearSelect.addEventListener('change', renderMonthPicker);
+    updateYearSelect();
+
+    function renderMonthPicker() {
+      const selectedYear = yearSelect.value;
+      monthPicker.innerHTML = '';
+      const table = document.createElement('table');
+      const header = document.createElement('thead');
+      header.innerHTML = `<tr><th colspan="3">${selectedYear}</th></tr>`;
+      table.appendChild(header);
+
+      const tbodyPicker = document.createElement('tbody');
+      for (let i = 0; i < 4; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < 3; j++) {
+          const m = i * 3 + j;
+          const cell = document.createElement('td');
+          cell.className = 'month';
+          cell.textContent = months[m];
+          cell.dataset.value = `${selectedYear}-${String(m + 1).padStart(2, '0')}`;
+          cell.onclick = () => showSalary(cell.dataset.value);
+          row.appendChild(cell);
+        }
+        tbodyPicker.appendChild(row);
+      }
+      table.appendChild(tbodyPicker);
+      monthPicker.appendChild(table);
+    }
+
+    function showSalary(month) {
+      const data = JSON.parse(localStorage.getItem('attendance') || '[]');
+      const filtered = data.filter(row => row.date.startsWith(month));
+
+      let totalPeriods = 0;
+      let totalMinutes = 0;
+      let totalSpecial = 0;
+      const specialReasons = [];
+
+      filtered.forEach(row => {
+        totalPeriods += (row.periods || []).length;
+        totalMinutes += row.officeMinutes || 0;
+        totalSpecial += parseInt(row.specialAmount || '0', 10);
+        if (row.specialReason) {
+          specialReasons.push(`${row.specialReason} (${parseInt(row.specialAmount || '0', 10).toLocaleString()}円)`);
+        }
+      });
+
+      let salary = 0;
+      if (totalPeriods === 6) {
+        salary = (5 * 2183) + (1 * 2729) + (totalMinutes * 18) + totalSpecial;
+      } else {
+        salary = totalPeriods * 2183 + totalMinutes * 18 + totalSpecial;
+      }
+
+      display.innerHTML = 
+        `<table>
+          <thead><tr><th>出勤コマ</th><th>事務時間</th><th>給与</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>${totalPeriods}</td>
+              <td>${totalMinutes}</td>
+              <td>${salary.toLocaleString()}円</td>
+            </tr>
+          </tbody>
+        </table>`;
+
+      specialReasonsList.innerHTML = specialReasons.length > 0 
+        ? `<ul>${specialReasons.map(reason => `<li>${reason}</li>`).join('')}</ul>`
+        : `<p>特別給なし</p>`;
+    }
+
+    // 総支給額（全期間分）を表示
+    function showTotalSalary() {
+      const data = JSON.parse(localStorage.getItem('attendance') || '[]');
+
+      let totalPeriods = 0;
+      let totalMinutes = 0;
+      let totalSpecial = 0;
+
+      data.forEach(row => {
+        totalPeriods += (row.periods || []).length;
+        totalMinutes += row.officeMinutes || 0;
+        totalSpecial += parseInt(row.specialAmount || '0', 10);
+      });
+
+      let salary = 0;
+      if (totalPeriods === 6) {
+        salary = (5 * 2183) + (1 * 2729) + (totalMinutes * 18) + totalSpecial;
+      } else {
+        salary = totalPeriods * 2183 + totalMinutes * 18 + totalSpecial;
+      }
+
+      document.getElementById('total-salary-display').innerHTML = 
+        `<p><strong>${salary.toLocaleString()}円</strong></p>`;
+    }
+
+    // 初期表示時に実行
+    showTotalSalary();
+  </script><script>document.getElementById('today').textContent=new Intl.DateTimeFormat('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(new Date());</script></body>
+</html>
