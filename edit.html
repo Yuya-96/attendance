@@ -151,7 +151,6 @@
       };
       try {
         localStorage.setItem('attendance', JSON.stringify(data));
-        alert('変更を保存しました。');
         location.href = 'list.html';
       } catch (error) {
         alert('保存に失敗しました。ブラウザの保存領域を確認してください。');
@@ -163,7 +162,6 @@
       const updated = data.filter((_, i) => i !== recordIndex);
       try {
         localStorage.setItem('attendance', JSON.stringify(updated));
-        alert('削除しました。');
         location.href = 'list.html';
       } catch (error) {
         alert('削除に失敗しました。');
